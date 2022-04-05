@@ -441,6 +441,8 @@ class FDDrainer:
         :type verbose: boolean
         """
         self.fd = fd
+        self.poller = select.poll()
+        self.poller.register(fd, select.POLLIN)
         self.name = name
         self.data = BytesIO()
         # TODO: check if, when the process finishes, the FD doesn't
@@ -469,7 +471,8 @@ class FDDrainer:
         bfr = b''
         while True:
             if self._ignore_bg_processes:
-                has_io = select.select([self.fd], [], [], 1)[0]
+
+                has_io = bool(self.poller.poll(100))
                 if (not has_io and self._result.exit_status is not None):
                     # Exit if no new data and main process has finished
                     break
